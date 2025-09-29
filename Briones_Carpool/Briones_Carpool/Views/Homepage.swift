@@ -8,16 +8,15 @@ struct HomeView: View {
 
     @EnvironmentObject var authVM: AuthViewModel
     @Environment(\.modelContext) private var context
-    
-    @State private var profileImageData: Data? = nil
-    // Helper to convert Data to UIImage
-    func dataToImage(_ data: Data?) -> Image {
-        guard let data = data, let uiImage = UIImage(data: data) else {
-            return Image(systemName: "person.crop.circle")
-        }
-        return Image(uiImage: uiImage)
+    private var localUserId: String? {
+        authVM.userId
     }
+    @Query var profiles: [UserProfile]
 
+    var currentProfile: UserProfile? {
+        profiles.first { $0.userId == authVM.userId }
+    }
+    
     var body: some View {
         VStack {
             Spacer().frame(height: 12)
@@ -36,32 +35,33 @@ struct HomeView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.trailing, 20)
-                
-                if let profileData = profileImageData {
-                    dataToImage(profileData)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 48, height: 48)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                        .padding(.top, 16)
-                        .padding(.horizontal, 8)
-                } else {
-                    Image(systemName: "person.crop.circle")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 48, height: 48)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                        .padding(.top, 16)
-                        .padding(.horizontal, 8)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 20)
-            .padding(.vertical, 30)
 
-            Spacer().frame(height: 12)
+                if let imageData = currentProfile?.profileImageData,
+                         let uiImage = UIImage(data: imageData) {
+                          Image(uiImage: uiImage)
+                              .resizable()
+                              .aspectRatio(contentMode: .fill)
+                              .frame(width: 48, height: 48)
+                              .clipShape(Circle())
+                              .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                              .padding(.top, 16)
+                              .padding(.horizontal, 8)
+                      } else {
+                          Image(systemName: "person.crop.circle")
+                              .resizable()
+                              .aspectRatio(contentMode: .fill)
+                              .frame(width: 48, height: 48)
+                              .clipShape(Circle())
+                              .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                              .padding(.top, 16)
+                              .padding(.horizontal, 8)
+                      }
+                  }
+                  .frame(maxWidth: .infinity, alignment: .leading)
+                  .padding(.leading, 20)
+                  .padding(.vertical, 30)
+
+                  Spacer().frame(height: 12)
 
             Image("homepage_image")
                 .resizable()
@@ -70,11 +70,10 @@ struct HomeView: View {
                 .padding(.horizontal, 8)
 
             Spacer().frame(height: 24)
-            
+
             Button("Sign Out") {
                 do {
                     try authVM.signOut()
-                    profileImageData = nil
                 } catch {
                     print("Failed to sign out: \(error.localizedDescription)")
                 }
@@ -122,25 +121,6 @@ struct HomeView: View {
         .background(Color.white)
         .edgesIgnoringSafeArea(.all)
         .navigationBarBackButtonHidden(true)
-        .onAppear {
-            fetchProfileImage()
-        }
-    }
-    
-    private func fetchProfileImage() {
-        guard let userId = authVM.userId else { return }
-        
-        let descriptor = FetchDescriptor<UserProfile>(
-            predicate: #Predicate { $0.userId == userId }
-        )
-        
-        do {
-            if let found = try context.fetch(descriptor).first {
-                self.profileImageData = found.profileImageData
-            }
-        } catch {
-            print("Failed to fetch profile image: \(error)")
-        }
     }
 }
 

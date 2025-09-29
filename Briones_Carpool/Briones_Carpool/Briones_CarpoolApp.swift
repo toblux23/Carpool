@@ -23,17 +23,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct Briones_CarpoolApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject var authVM = AuthViewModel()
+    
     var body: some Scene {
         WindowGroup {
-            if authVM.isAuthenticated {
-                ContentView()
-                    .environmentObject(authVM)
-            } else {
-                AuthContainerView()
-                    .environmentObject(authVM)
-            }
+            RootView()
+                .environmentObject(authVM)
         }
         .modelContainer(for: [UserProfile.self])
-
     }
 }

@@ -66,7 +66,7 @@ class AuthViewModel: ObservableObject {
                     completion(.failure(error))
                 } else {
                     self.userId = userId
-                    self.isAuthenticated = false
+                    self.isAuthenticated = true
                     self.isProfileCompleted = false
                     completion(.success(()))
                 }
@@ -82,6 +82,7 @@ class AuthViewModel: ObservableObject {
             }
             self.userId = authResult?.user.uid
             self.isAuthenticated = true
+            self.isProfileCompleted = true
             completion(.success(()))
         }
     }

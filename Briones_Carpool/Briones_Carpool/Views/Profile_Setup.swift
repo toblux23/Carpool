@@ -4,31 +4,8 @@ import FirebaseFirestore
 import SwiftData
 import UIKit
 
-// SwiftData model for local storage
-@Model
-class UserProfile {
-    @Attribute var id: UUID
-    @Attribute var userId: String
-    @Attribute var fullName: String
-    @Attribute var phoneNumber: String
-    @Attribute var isDriver: Bool
-    @Attribute var isRider: Bool
-    @Attribute var driverLicense: String
-    @Attribute var profileImageData: Data?
-    @Attribute var licenseImageData: Data?
 
-    init(id: UUID = UUID(), userId: String, fullName: String, phoneNumber: String, isDriver: Bool, isRider: Bool, driverLicense: String, profileImageData: Data?, licenseImageData: Data?) {
-        self.id = id
-        self.userId = userId
-        self.fullName = fullName
-        self.phoneNumber = phoneNumber
-        self.isDriver = isDriver
-        self.isRider = isRider
-        self.driverLicense = driverLicense
-        self.profileImageData = profileImageData
-        self.licenseImageData = licenseImageData
-    }
-}
+
 
 struct AlertMessage: Identifiable {
     var id: String { message }
@@ -126,18 +103,11 @@ struct MultiStepProfileSetupView: View {
                     "Status": "Pending"
                 ]
 
-                // Save to Firestore
                 let db = Firestore.firestore()
                 try await db.collection("profiles").document(userId).setData(profileData, merge: true)
 
-                // Save images locally in SwiftData
                 let localProfile = UserProfile(
                     userId: userId,
-                    fullName: fullName,
-                    phoneNumber: phoneNumber,
-                    isDriver: isDriver,
-                    isRider: isRider,
-                    driverLicense: isDriver ? driverLicense : "",
                     profileImageData: profileImageData,
                     licenseImageData: licenseImageData
                 )
@@ -157,6 +127,7 @@ struct MultiStepProfileSetupView: View {
     }
 }
 
+// The supporting views remain unchanged as they do not affect the simplified model.
 
 
 // Supporting views

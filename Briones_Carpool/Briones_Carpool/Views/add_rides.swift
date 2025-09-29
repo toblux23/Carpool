@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseFirestore
+import FirebaseAuth
 
 struct CreateRideView: View {
     @State private var departureFrom = "SM Lucena City"
@@ -19,6 +20,12 @@ struct CreateRideView: View {
     func createRide(completion: @escaping (Result<Void, Error>) -> Void) {
         let db = Firestore.firestore()
 
+
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            completion(.failure(NSError(domain: "CreateRide", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in."])))
+            return
+        }
+
         let calendar = Calendar.current
         let combinedDate = calendar.date(
             bySettingHour: calendar.component(.hour, from: time),
@@ -28,12 +35,14 @@ struct CreateRideView: View {
         ) ?? Date()
 
         let rideData: [String: Any] = [
+            "driverId": currentUserId,
             "departureFrom": departureFrom,
             "departureTo": departureTo,
             "departureDateTime": Timestamp(date: combinedDate),
             "seatsAvailable": seats,
             "price": price,
             "paymentMethod": paymentMethod,
+            "passengers": [],
             "createdAt": Timestamp(date: Date())
         ]
 
@@ -71,7 +80,7 @@ struct CreateRideView: View {
                         Image(systemName: "circle.fill")
                             .foregroundColor(Color(red: 128/255, green: 0, blue: 0))
                         TextField("", text: $departureFrom)
-                            .disabled(true)
+                            .disabled(true) // keep hardcoded for now
                             .padding(.horizontal, 6)
                             .frame(height: 38)
                             .background(Color(.systemGray6))
@@ -106,6 +115,7 @@ struct CreateRideView: View {
                         }
                     }
 
+                    // Seats
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Seats Available")
                             .bold()
@@ -129,6 +139,7 @@ struct CreateRideView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
+                    // Price
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Price")
                             .bold()
@@ -156,6 +167,7 @@ struct CreateRideView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
+                    // Payment
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Preferred Payment Method")
                             .bold()
@@ -191,6 +203,7 @@ struct CreateRideView: View {
                 )
                 .padding(.horizontal)
 
+                // Create button
                 Button(action: {
                     createRide { result in
                         switch result {

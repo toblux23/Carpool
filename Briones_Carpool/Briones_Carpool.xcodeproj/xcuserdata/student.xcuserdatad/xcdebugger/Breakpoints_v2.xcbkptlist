@@ -3,4 +3,22 @@
    uuid = "EA9DE31C-A9DE-46E0-9212-DD14EA32FDD5"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "61682D4F-C555-4999-A355-A45C3436BDBE"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../../../var/folders/5k/jhd6dnx120709ry_lnv918yw0000gn/T/swift-generated-sources/@__swiftmacro_15Briones_Carpool0020find_rideswift_odAJdfMX108_74_33_66AAFAB8091329BC6FB70A620B6052EALl9PredicatefMf_.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1"
+            endingLineNumber = "1"
+            landmarkName = "loadRides()"
+            landmarkType = "37">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

@@ -6,38 +6,35 @@ import FirebaseFirestore
 enum AuthScreen { case signup, signin }
 
 struct AuthContainerView: View {
-    
     @EnvironmentObject var authVM: AuthViewModel
     @State private var screen: AuthScreen = .signin
     @State private var isSigningUp = false
 
     var body: some View {
-        
-        if authVM.isAuthenticated {
-            MainContainerView()
-        } else if isSigningUp {
-            MultiStepProfileSetupView(onFinish: {
-                authVM.isAuthenticated = true
-                isSigningUp = false
-            })
-        } else {
+        if !authVM.isAuthenticated {
             VStack {
                 if screen == .signin {
                     SigninView(
                         onSwitch: { self.screen = .signup },
                         onSignedIn: {
-                            authVM.isAuthenticated = true
-                        })
+                        }
+                    )
                 } else {
                     SignupView(
                         onSwitch: { self.screen = .signin },
                         onSignedUp: {
                             isSigningUp = true
-                            print("profile setup")
-                            print("$authVM.isAuthenticated: \(authVM.isAuthenticated)")
-                        })
+                        }
+                    )
                 }
             }
+        } else if isSigningUp || !authVM.isProfileCompleted {
+            MultiStepProfileSetupView(onFinish: {
+                authVM.isProfileCompleted = true
+                isSigningUp = false
+            })
+        } else {
+            MainContainerView()
         }
     }
 }
@@ -62,7 +59,7 @@ struct SigninView: View {
                         .frame(width: 44, height: 32)
                         .foregroundColor(.blue)
                     HStack(spacing: 0) {
-                        Text("EU")
+                        Text("U")
                             .font(.headline)
                             .foregroundColor(.black)
                         Text("RIDE")
@@ -162,7 +159,7 @@ struct SignupView: View {
                         .frame(width: 44, height: 32)
                         .foregroundColor(.blue)
                     HStack(spacing: 0) {
-                        Text("EU")
+                        Text("U")
                             .font(.headline)
                             .foregroundColor(.black)
                         Text("RIDE")
