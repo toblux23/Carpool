@@ -3,18 +3,6 @@ import FirebaseFirestore
 import FirebaseAuth
 import SwiftData
 
-// MARK: - RideRequest Model
-struct RideRequest: Identifiable {
-    let id: String
-    let riderId: String
-    let requesterName: String
-    let requesterImageData: Data?
-    let requestedAt: Date
-    let rideId: String
-    let status: String
-}
-
-// Assume Ride model is imported from your existing file
 
 // MARK: - RequestsView
 struct RequestsView: View {
@@ -69,7 +57,7 @@ struct RequestsView: View {
                 }
                 var tempRequests: [RideRequest] = []
                 let group = DispatchGroup()
-
+                
                 snapshot?.documents.forEach { doc in
                     let data = doc.data()
                     let requesterId = data["rider_id"] as? String ?? ""
@@ -77,10 +65,10 @@ struct RequestsView: View {
                     let status = data["status"] as? String ?? ""
                     let ts = data["requestedAt"] as? Timestamp ?? Timestamp(date: Date())
                     let requestedAt = ts.dateValue()
-
-
+                    
+                    
                     var fullName = "Unknown"
-
+                    
                     group.enter()
                     db.collection("profiles").document(requesterId).getDocument { userDoc, _ in
                         if let userData = userDoc?.data() {
@@ -88,31 +76,35 @@ struct RequestsView: View {
                         }
                         group.leave()
                     }
-
+                    
                     group.notify(queue: .main) {
                         let request = FetchDescriptor<UserProfile>(predicate: #Predicate { profile in profile.userId == requesterId })
                         let profile = try? context.fetch(request).first
                         let imageData = profile?.profileImageData
-
-                        let rideRequest = RideRequest(id: doc.documentID,
-                                                     riderId: requesterId,
-                                                     requesterName: fullName,
-                                                     requesterImageData: imageData,
-                                                     requestedAt: requestedAt,
-                                                     rideId: rideId,
-                                                     status: status)
+                        
+                        let rideRequest = RideRequest(
+                            id: doc.documentID,
+                            riderId: requesterId,
+                            requesterName: fullName,
+                            requesterImageData: imageData,
+                            requestedAt: requestedAt,
+                            rideId: rideId,
+                            status: status
+                        )
                         tempRequests.append(rideRequest)
-
+                        
                         if tempRequests.count == snapshot?.documents.count {
-                            requests = tempRequests
+                            // Sort by requestedAt descending (most recent first)
+                            requests = tempRequests.sorted { $0.requestedAt > $1.requestedAt }
                         }
                     }
                 }
+                
                 if snapshot?.documents.isEmpty ?? true {
                     requests = []
                 }
             }
-    }
+   }
 
     func acceptRequest(_ request: RideRequest) {
         let db = Firestore.firestore()
@@ -196,7 +188,7 @@ struct RidesView: View {
                             RideCard(
                                 driverName: ride.driverName ?? "Loading...",
                                 driverType: "Driver",
-                                profileImage: "",
+                                driverImageData: ride.driverImageData,
                                 fromLocation: ride.fromLocation,
                                 toLocation: ride.toLocation,
                                 departureTime: ride.departureTime,
@@ -205,6 +197,7 @@ struct RidesView: View {
                                 timeToTravel: ride.timeToTravel,
                                 showRate: false
                             )
+
                         }
                     }
                     .padding()
@@ -274,19 +267,30 @@ struct RidesView: View {
     }
 
     func fetchDriverNames(for rides: [Ride]) {
-        @EnvironmentObject var authVM: AuthViewModel
         let db = Firestore.firestore()
         var updatedRides = rides
         let group = DispatchGroup()
 
         for (index, ride) in rides.enumerated() {
             group.enter()
-            db.collection("profiles").document(ride.driverId).getDocument { snapshot, error in
-                if let data = snapshot?.data(), let name = data["fullName"] as? String {
-                    updatedRides[index].driverName = name
-                } else {
-                    updatedRides[index].driverName = "Unknown"
+            db.collection("profiles").document(ride.driverId).getDocument { snapshot, _ in
+                var name = "Unknown"
+                if let data = snapshot?.data(), let n = data["fullName"] as? String {
+                    name = n
                 }
+
+                let driverId = ride.driverId
+                let fetchRequest = FetchDescriptor<UserProfile>(
+                    predicate: #Predicate { profile in
+                        profile.userId == driverId
+                    }
+                )
+                if let profile = try? context.fetch(fetchRequest).first {
+                    updatedRides[index].driverImageData = profile.profileImageData
+                } else {
+                    updatedRides[index].driverImageData = nil
+                }
+                updatedRides[index].driverName = name
                 group.leave()
             }
         }
@@ -440,7 +444,7 @@ struct ReviewCard: View {
 struct RideCard: View {
     let driverName: String
     let driverType: String
-    let profileImage: String
+    let driverImageData: Data?
     let fromLocation: String
     let toLocation: String
     let departureTime: String
@@ -452,12 +456,18 @@ struct RideCard: View {
     var body: some View {
         VStack(spacing: 12) {
             HStack {
-                Image(profileImage)
-                    .resizable()
-                    .frame(width: 40, height: 40)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color(.systemGray5), lineWidth: 2))
-
+                if let data = driverImageData, let uiImage = UIImage(data: data) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .frame(width: 40, height: 40)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color(.systemGray5), lineWidth: 2))
+                } else {
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .frame(width: 40, height: 40)
+                        .foregroundColor(.gray)
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(driverName)
                         .font(.headline)

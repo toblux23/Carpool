@@ -26,6 +26,7 @@ struct MainContainerView: View {
                 case .notifications:
                     NotificationView()
                 }
+
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             
